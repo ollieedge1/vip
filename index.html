@@ -1,0 +1,2367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visual Investment Performance · Case Study · Ollie Edge</title>
+<meta name="theme-color" content="#F0EBE3" id="themeColorMeta">
+
+<!-- DEPLOY NOTE: When you deploy to your repo, swap the @font-face block below with your PP fonts:
+     PP Right Grotesk Black → display
+     PP Neue Montreal Medium → body
+     PP Supply Mono Ultralight → mono
+     For this preview, we're using Anton / Inter / JetBrains Mono as visual stand-ins. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@200;300&display=swap" rel="stylesheet">
+
+<style>
+/* ─────────────────────────────────────────────────────────────
+   DESIGN TOKENS — extracted from ollieedge.com
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --bg: #F0EBE3;
+  --bg-elevated: #E8E3DA;
+  --text: #1A1A1A;
+  --muted: rgba(26, 26, 26, 0.72);
+  --subtle: rgba(26, 26, 26, 0.48);
+  --border: rgba(26, 26, 26, 0.1);
+  --border-strong: rgba(26, 26, 26, 0.2);
+  --accent: #641EE0;
+
+  /* Chart-only colors — the ONLY chromatic moments on the page */
+  --chart-positive: #2F6F4F;
+  --chart-negative: #9B3838;
+  --chart-line: #1A1A1A;
+  --chart-grid: rgba(26, 26, 26, 0.08);
+  --chart-fill-positive: rgba(47, 111, 79, 0.08);
+  --chart-fill-negative: rgba(155, 56, 56, 0.08);
+
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 3rem;
+  --space-xl: 6rem;
+  --space-2xl: 10rem;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-pill: 100px;
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Type — swap font-family declarations when fonts are local */
+  --font-display: "Anton", "PP Right Grotesk", "Impact", sans-serif;
+  --font-body: "Inter", "PP Neue Montreal", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", "PP Supply Mono", "Courier New", monospace;
+
+  --content-max: 900px;
+  --wide-max: 1180px;
+}
+
+:root.dark {
+  --bg: #141414;
+  --bg-elevated: #1c1c1c;
+  --text: #F0EBE3;
+  --muted: rgba(240, 235, 227, 0.72);
+  --subtle: rgba(240, 235, 227, 0.48);
+  --border: rgba(240, 235, 227, 0.1);
+  --border-strong: rgba(240, 235, 227, 0.2);
+  --accent: #9D6FF2; /* lightened for dark-bg legibility; brand: #641EE0 */
+  --chart-line: #F0EBE3;
+  --chart-grid: rgba(240, 235, 227, 0.08);
+  /* Chart colors tuned for dark mode — brighter, more saturated */
+  --chart-positive: #5FB58A;
+  --chart-negative: #D67373;
+  --chart-fill-positive: rgba(95, 181, 138, 0.12);
+  --chart-fill-negative: rgba(214, 115, 115, 0.12);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RESET + BASE
+   ───────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.6;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.55s var(--ease), color 0.55s var(--ease);
+}
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; background: none; border: none; padding: 0; cursor: pointer; color: inherit; }
+
+::selection { background: var(--accent); color: #FFFFFF; }
+
+/* ─────────────────────────────────────────────────────────────
+   TYPOGRAPHY SYSTEM
+   ───────────────────────────────────────────────────────────── */
+.display-xl {
+  font-family: var(--font-display);
+  font-weight: 400;  /* Anton has no weights; for PP Right Grotesk swap to 900 */
+  font-size: clamp(48px, 8vw, 112px);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.display-lg {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(44px, 6.5vw, 88px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.display-md {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(28px, 3.5vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.lead {
+  font-size: clamp(20px, 2.2vw, 26px);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+  color: var(--text);
+}
+.body {
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--muted);
+  font-weight: 400;
+}
+.body strong { color: var(--text); font-weight: 600; }
+.caption {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+
+
+/* Progress bar */
+.progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--accent);
+  z-index: 9999;
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 0.1s linear;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LAYOUT
+   ───────────────────────────────────────────────────────────── */
+.content-wrap {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+.wide-wrap {
+  max-width: var(--wide-max);
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+section {
+  padding: var(--space-xl) 0;
+  position: relative;
+  scroll-margin-top: 80px;
+}
+section + section { padding-top: 0; }
+
+/* Body paragraphs in chapters stay left-aligned (Apple pattern) */
+section .content-wrap > .body {
+  max-width: 56ch;
+}
+section .content-wrap > .body + .body {
+  margin-top: var(--space-md);
+}
+
+/* Step reveal disabled: everything visible at once */
+[data-step] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Apple-style section intro — left-aligned, two-tone headline */
+.intro-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(38px, 5.5vw, 76px);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  text-align: left;
+  max-width: 26ch;
+  margin-bottom: var(--space-md);
+}
+.intro-name { color: var(--accent); }
+.intro-tagline { color: var(--subtle); }
+.intro-body {
+  font-size: clamp(19px, 2vw, 24px);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--muted);
+  max-width: 56ch;
+  margin-bottom: var(--space-md);
+}
+.intro-body strong { color: var(--text); font-weight: 600; }
+
+/* ─────────────────────────────────────────────────────────────
+   APPLE-STYLE FEATURE STACK
+   ───────────────────────────────────────────────────────────── */
+.feature-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  margin-top: var(--space-xl);
+}
+.feature-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: var(--space-sm);
+}
+.feature-eyebrow {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.feature-headline {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(28px, 3.4vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  max-width: 22ch;
+  color: var(--text);
+}
+.feature-body {
+  font-size: clamp(17px, 1.6vw, 19px);
+  line-height: 1.55;
+  max-width: 56ch;
+  color: var(--muted);
+}
+.feature-body strong { color: var(--text); font-weight: 600; }
+.feature-visual {
+  width: 100%;
+  max-width: var(--wide-max);
+  margin-top: var(--space-md);
+}
+.feature-visual img,
+.feature-visual video {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-lg);
+}
+.feature-visual .media-placeholder {
+  margin: 0;
+}
+.feature-meta {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--subtle);
+  margin-top: var(--space-sm);
+}
+.feature-spec {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(48px, 7vw, 96px);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin: var(--space-md) 0 0;
+}
+.feature-spec-detail {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--subtle);
+  margin-top: 4px;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   HERO
+   ───────────────────────────────────────────────────────────── */
+.hero {
+  min-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-xl) 0;
+}
+.hero-eyebrow {
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+.hero-title {
+  margin: 0 auto var(--space-lg);
+  max-width: 22ch;
+  text-align: center;
+}
+.hero-title em {
+  font-style: italic;
+  font-family: "Inter", serif;
+  font-weight: 300;
+  text-transform: none;
+  letter-spacing: -0.03em;
+}
+.hero-title-sub {
+  display: inline-block;
+  color: var(--accent);
+}
+.hero-brand {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: clamp(14px, 1.6vw, 18px);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.brand-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 12px;
+}
+.brand-chip img {
+  height: 26px;
+  width: auto;
+  display: block;
+}
+.hero-sub {
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.5;
+  max-width: 44ch;
+  color: var(--muted);
+  margin: 0 auto var(--space-lg);
+  text-align: center;
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   CONSTRAINTS GRID
+   ───────────────────────────────────────────────────────────── */
+.constraints {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: var(--space-md);
+}
+.constraint {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  background: transparent;
+  transition: border-color 0.2s, background 0.2s;
+}
+.constraint:hover { border-color: var(--border-strong); }
+.constraint-label {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--subtle);
+  margin-bottom: 6px;
+}
+.constraint-text {
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   EXPLORATION DIRECTIONS
+   ───────────────────────────────────────────────────────────── */
+.explorations {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+@media (max-width: 720px) {
+  .explorations { grid-template-columns: 1fr; }
+}
+.exploration {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  position: relative;
+  transition: border-color 0.2s;
+}
+.exploration.chosen {
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+.exploration-tags {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 6px;
+}
+.exploration-tags .exploration-tag {
+  position: static;
+}
+.exploration-tag.tested {
+  border-color: var(--border-strong);
+  color: var(--muted);
+}
+.exploration-tag {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  color: var(--accent);
+}
+.exploration-letter {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--text);
+}
+.exploration-thumb {
+  aspect-ratio: 4/3;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.exploration-thumb svg {
+  width: 80%;
+  height: 60%;
+}
+.exploration-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+.exploration-body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   THE CHART — interactive, the only color on the page
+   ───────────────────────────────────────────────────────────── */
+.chart-wrap {
+  margin-top: var(--space-md);
+  max-width: var(--wide-max);
+}
+.chart-frame {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   RESULT GALLERY — finished designs, prototype, video, images
+   ───────────────────────────────────────────────────────────── */
+.result-gallery {
+  margin-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* Hero media — the main shipped design */
+.result-hero {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+.result-hero img,
+.result-hero video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Embed wrapper — for Figma prototype iframe and YouTube/Vimeo videos */
+.embed-wrap {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+.embed-wrap.aspect-16-9 { aspect-ratio: 16/9; }
+.embed-wrap.aspect-4-3 { aspect-ratio: 4/3; }
+.embed-wrap.aspect-figma { aspect-ratio: 16/10; }
+.embed-wrap iframe,
+.embed-wrap video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* Image pair — two screens side by side */
+.image-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+@media (max-width: 720px) {
+  .image-pair { grid-template-columns: 1fr; }
+}
+.image-pair > * {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+.image-pair img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Caption beneath any media */
+.media-block-caption {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--subtle);
+  margin-top: 10px;
+}
+
+/* "Try the prototype" floating link on the Figma embed */
+.embed-link.figma-chip {
+  position: static;
+  margin-bottom: 4px;
+}
+.embed-link {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  padding: 8px 14px;
+  z-index: 2;
+  transition: background 0.2s, border-color 0.2s;
+}
+.embed-link:hover {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   INTERACTION MODEL — three gestures
+   ───────────────────────────────────────────────────────────── */
+.gestures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+@media (max-width: 720px) { .gestures { grid-template-columns: 1fr; } }
+.gesture {
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gesture-name {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.gesture-diagram {
+  aspect-ratio: 3/4;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+.gesture-diagram img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.gesture-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   STATES GRID
+   ───────────────────────────────────────────────────────────── */
+.states {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+.state {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.state-vis {
+  aspect-ratio: 4/3;
+  background: var(--bg-elevated);
+  position: relative;
+  overflow: hidden;
+}
+.state-vis svg {
+  width: 100%; height: 100%; display: block;
+}
+.state-info { padding: 16px 18px; }
+.state-label {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--subtle);
+  margin-bottom: 6px;
+}
+.state-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.state-body {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MOTION SECTION
+   ───────────────────────────────────────────────────────────── */
+.motion-specs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+.motion-specs.four {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (max-width: 720px) { .motion-specs, .motion-specs.four { grid-template-columns: 1fr; } }
+.motion-spec {
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.motion-spec-name {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.motion-spec-value {
+  font-family: var(--font-body);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.motion-spec-detail {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--subtle);
+  margin-bottom: 12px;
+}
+.motion-spec-desc {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HANDOFF — spec artefact + callouts
+   ───────────────────────────────────────────────────────────── */
+.handoff {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--space-lg);
+  margin-top: var(--space-md);
+  align-items: start;
+}
+@media (max-width: 900px) { .handoff { grid-template-columns: 1fr; } }
+.handoff-artefact {
+  position: sticky;
+  top: 100px;
+}
+@media (max-width: 900px) { .handoff-artefact { position: relative; top: 0; } }
+.handoff-callouts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+.callout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.callout-num {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0;
+  color: var(--accent);
+}
+.callout-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.callout-body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PULL QUOTE — the masterpiece moment
+   ───────────────────────────────────────────────────────────── */
+.pullquote {
+  margin-top: var(--space-lg);
+  padding: var(--space-xl) 0;
+  text-align: left;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.pullquote-mark {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(48px, 6vw, 80px);
+  line-height: 1;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.pullquote-text {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(40px, 6vw, 72px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: var(--space-md);
+}
+.pullquote-attr {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Outcome metrics */
+.outcomes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+.outcome {
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.outcome-value {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.outcome-label {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   APPLE-STYLE HORIZONTAL CARD GALLERY
+   ───────────────────────────────────────────────────────────── */
+.card-gallery-wrap { position: relative; margin-top: var(--space-lg); }
+.card-gallery {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 4px 0 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.card-gallery::-webkit-scrollbar { display: none; }
+.gcard {
+  flex: 0 0 min(420px, 82vw);
+  scroll-snap-align: start;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.gcard-content { padding: 28px 28px 18px; }
+.gcard-eyebrow {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.gcard-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.gcard-body {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.gcard-spec {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-top: 14px;
+}
+.gcard-spec-detail {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--subtle);
+  margin-top: 4px;
+}
+.gcard-media {
+  margin-top: auto;
+  aspect-ratio: 4/3;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gcard-media img,
+.gcard-media video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gcard-media-label {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--subtle);
+  text-align: center;
+  padding: 0 20px;
+}
+.gcard-meta {
+  padding: 14px 28px 20px;
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+.gallery-paddles {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+.paddle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.paddle:hover { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+.paddle svg { width: 14px; height: 14px; }
+
+
+/* ─────────────────────────────────────────────────────────────
+   KEYWORD TAGS
+   ───────────────────────────────────────────────────────────── */
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: var(--space-md) 0;
+  max-width: 760px;
+}
+.tag {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SEGMENT TABLE
+   ───────────────────────────────────────────────────────────── */
+.seg-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--space-md);
+}
+.seg-table th, .seg-table td {
+  text-align: left;
+  padding: 14px 16px 14px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.seg-table th {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+.seg-table td {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.seg-table td:first-child {
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+  padding-right: 24px;
+}
+@media (max-width: 720px) {
+  .seg-table td:first-child { white-space: normal; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MEDIA PLACEHOLDERS
+   ───────────────────────────────────────────────────────────── */
+.media {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  margin: var(--space-md) 0;
+}
+.media-placeholder {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border-strong);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  text-align: center;
+  position: relative;
+  margin: var(--space-md) 0;
+}
+.media-placeholder[data-aspect="16/9"] { aspect-ratio: 16/9; }
+.media-placeholder[data-aspect="4/3"] { aspect-ratio: 4/3; }
+.media-placeholder[data-aspect="3/4"] { aspect-ratio: 3/4; }
+.media-placeholder[data-aspect="1/1"] { aspect-ratio: 1/1; }
+.media-placeholder-icon {
+  width: 32px; height: 32px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+.media-placeholder-label {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  max-width: 80%;
+}
+.media-placeholder-hint {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--subtle);
+  margin-top: 8px;
+  font-style: italic;
+}
+.media-caption {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--subtle);
+  text-align: center;
+  margin-top: 8px;
+  margin-bottom: var(--space-md);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   FOOTER
+   ───────────────────────────────────────────────────────────── */
+.footer {
+  padding: var(--space-2xl) 0 var(--space-xl);
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-xl);
+}
+.footer-cta {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(40px, 6vw, 80px);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: var(--space-md);
+}
+.footer-cta em {
+  font-style: italic;
+  font-family: "Inter", serif;
+  font-weight: 300;
+  text-transform: none;
+  letter-spacing: -0.03em;
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.footer-links a {
+  color: var(--muted);
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--accent); }
+.footer-meta {
+  margin-top: var(--space-lg);
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   REVEAL ON SCROLL
+   ───────────────────────────────────────────────────────────── */
+[data-reveal] {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  [data-reveal] { opacity: 1; transform: none; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MOBILE
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  :root {
+    --space-lg: 1.5rem;
+    --space-xl: 3rem;
+  }
+  .hero { min-height: 70vh; }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   DECK MODE — each chapter is a full-page slide
+   ═════════════════════════════════════════════════════════════ */
+html, body { height: 100%; }
+body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+section:not(.active),
+footer.footer:not(.active) { display: none; }
+
+section.active,
+footer.footer.active {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 24px 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+footer.footer.active { border-top: none; }
+
+section.active > .content-wrap,
+section.active > .wide-wrap,
+footer.footer.active > .content-wrap {
+  display: block;
+  width: 100%;
+  will-change: transform;
+}
+
+.hero { min-height: 0; padding: 0; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+.deck-controls {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 8px 10px;
+}
+.deck-counter {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  min-width: 52px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.deck-hint {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 200;
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+@media (max-width: 720px) {
+  .deck-hint { display: none; }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   FIT-TO-VIEWPORT DENSITY PASS — no scrolling, anywhere
+   ═════════════════════════════════════════════════════════════ */
+.intro-title { font-size: clamp(30px, 4.2vw, 56px); margin-bottom: var(--space-sm); }
+.intro-body { font-size: clamp(15px, 1.6vw, 20px); margin-bottom: var(--space-sm); }
+.display-xl { font-size: clamp(38px, 6.5vw, 84px); }
+.body { font-size: 15.5px; }
+section .content-wrap > .body { font-size: 15.5px; }
+.feature-headline { font-size: clamp(20px, 2.4vw, 30px); }
+
+/* Two-column slide layout */
+.twocol {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: clamp(20px, 3vw, 44px);
+  align-items: start;
+  margin-top: var(--space-md);
+}
+.twocol .feature-headline { margin-top: 0 !important; }
+
+/* Compact constraint chips */
+.constraints { gap: 10px; margin-top: var(--space-sm); }
+.constraints.onecol { grid-template-columns: 1fr 1fr; margin-top: 0; }
+.constraints.qgrid { grid-template-columns: 1fr 1fr; margin-top: var(--space-sm); }
+.constraint { padding: 11px 13px; }
+.constraint-text { font-size: 13px; }
+.constraint-label { font-size: 10px; margin-bottom: 4px; }
+.tag-row { margin: var(--space-sm) 0; gap: 6px; }
+.tag { font-size: 10px; padding: 4px 9px; }
+
+/* Compact segment table */
+.seg-table { margin-top: var(--space-sm); }
+.seg-table th, .seg-table td { padding: 8px 10px 8px 0; font-size: 13px; }
+.seg-table th { font-size: 10px; }
+
+/* Gestures: two compact cards */
+.gestures { grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 0; }
+.gesture { padding: 14px; gap: 8px; }
+.gesture-name { font-size: 18px; }
+.gesture-desc { font-size: 12px; }
+.gesture-diagram { aspect-ratio: 4/3; }
+
+/* Galleries: grid, no horizontal scroll, no paddles */
+.card-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  overflow: visible;
+  scroll-snap-type: none;
+  padding: 0;
+}
+.gcard { flex: none; width: auto; border-radius: 18px; }
+.gcard-content { padding: 15px 15px 10px; }
+.gcard-eyebrow { font-size: 9px; margin-bottom: 6px; }
+.gcard-title { font-size: 17px; margin-bottom: 6px; }
+.gcard-body { font-size: 12px; }
+.gcard-spec { font-size: 22px; margin-top: 8px; }
+.gcard-spec-detail { font-size: 10px; }
+.gcard-media { aspect-ratio: 16/10; }
+.gcard-meta { padding: 8px 15px 12px; font-size: 9px; }
+.gallery-paddles { display: none; }
+.card-gallery-wrap { margin-top: var(--space-md); }
+
+/* Result grid: demo left, prototype + details right */
+.result-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 18px;
+  align-items: start;
+  margin-top: var(--space-md);
+}
+.result-hero { display: flex; justify-content: center; }
+.result-hero video { width: auto; max-width: 100%; max-height: 52vh; }
+.embed-wrap.aspect-figma { aspect-ratio: 16/10; }
+
+/* Media height caps so big artefacts never force scroll */
+.feature-visual img { max-height: 44vh; width: auto; max-width: 100%; margin: 0 auto; display: block; }
+.image-pair img { max-height: 30vh; object-fit: cover; width: 100%; }
+.image-pair .media-placeholder { max-height: 30vh; }
+.media-placeholder[data-aspect="16/9"] { max-height: 34vh; }
+
+/* Handoff: compact, no sticky */
+.handoff { gap: 28px; margin-top: var(--space-sm); }
+.handoff-artefact { position: static; }
+.handoff-callouts { gap: var(--space-md); }
+.callout-title { font-size: 15px; margin-bottom: 4px; }
+.callout-body { font-size: 12.5px; }
+.callout-num { width: 24px; height: 24px; font-size: 11px; }
+
+/* Outcomes compact */
+.outcomes { gap: 12px; margin-top: var(--space-sm); }
+.outcome { padding: 14px; }
+.outcome-value { font-size: clamp(22px, 2.8vw, 34px); margin-bottom: 4px; }
+.outcome-label { font-size: 10px; }
+
+/* Exploration compact */
+.explorations { gap: 14px; margin-top: var(--space-sm); }
+.exploration { padding: 14px; gap: 10px; }
+.exploration-thumb { aspect-ratio: 16/10; }
+.exploration-letter { font-size: 24px; }
+.exploration-title { font-size: 14px; }
+.exploration-body { font-size: 12px; }
+
+/* Problem statement + role meta */
+.problem-statement {
+  border-left: 3px solid var(--accent);
+  padding: 4px 0 4px 20px;
+  margin: var(--space-md) 0;
+  max-width: 62ch;
+}
+.ps-label {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.ps-text {
+  font-size: clamp(17px, 1.8vw, 22px);
+  line-height: 1.45;
+  color: var(--text);
+  font-weight: 500;
+}
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 40px;
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+}
+.meta-item { display: flex; flex-direction: column; gap: 3px; }
+.meta-item span {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+.meta-item div { font-size: 14px; font-weight: 500; color: var(--text); }
+
+/* Customer opportunities (Empathise) */
+.opps { display: flex; flex-direction: column; gap: 12px; margin-top: var(--space-sm); }
+.opp { display: flex; gap: 12px; align-items: baseline; }
+.opp-num {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 12px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.opp-text { font-size: 14.5px; font-weight: 500; color: var(--text); line-height: 1.4; }
+.opp-text em { font-style: normal; font-weight: 400; color: var(--muted); }
+
+/* Hero background image with readability tint.
+   Drop your image at assets/images/hero-bg.jpg
+   Tint strength: adjust the 82% (higher = more tint, more readable). */
+.hero {
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--bg) 82%, transparent),
+      color-mix(in srgb, var(--bg) 82%, transparent)
+    ),
+    url('assets/images/hero-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Impact chain (Outcome) */
+.chain-label {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--subtle);
+  margin-bottom: 10px;
+}
+.chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+.chain-node {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+  background: var(--bg-elevated);
+  white-space: nowrap;
+}
+.chain-node.first { border-color: var(--accent); color: var(--accent); }
+.chain-node.proven { background: var(--accent); border-color: var(--accent); color: #FFFFFF; }
+.chain-arrow {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<!-- Progress bar -->
+<div class="progress" id="progress"></div>
+
+<!-- Deck controls -->
+<div class="deck-controls">
+  <button class="paddle" id="prevSlide" aria-label="Previous slide"><svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <span class="deck-counter" id="deckCounter">1 / 13</span>
+  <button class="paddle" id="nextSlide" aria-label="Next slide"><svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="deck-hint">← → to navigate</div>
+
+
+
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════════════════════════ -->
+<section class="hero" id="intro">
+  <div class="content-wrap">
+    <p class="hero-brand" data-reveal><span class="brand-chip"><img src="assets/images/aegon-logo.png" alt="Aegon logo"></span> Aegon</p>
+    <h1 class="display-xl hero-title" data-reveal>Redesigning the way savers engage with their pension.</h1>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     THE CONTEXT
+     ═══════════════════════════════════════════════════════════ -->
+<section id="context">
+  <div class="content-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">The context.</span></h2>
+    <p class="intro-body" data-reveal><span style="font-family: var(--font-mono); font-weight: 300; font-size: 0.7em; letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle);">Jan 2025</span></p>
+    <p class="intro-body" data-reveal>Aegon, the UK's largest digital savings platform, wanted to introduce visual investment performance in their recently launched mobile app, to increase <strong>engagement and retention</strong>.</p>
+    <p class="body" data-reveal>The target audience: <strong>job switchers</strong>. Recently changed jobs, consolidating old pots or curious about their pension's growth, and deciding whether to trust Aegon with their money.</p>
+
+    <div class="meta-row" data-reveal>
+      <div class="meta-item">
+        <span>My role</span>
+        <div>Design Lead</div>
+      </div>
+      <div class="meta-item">
+        <span>Owned</span>
+        <div>Interaction · Motion · Accessibility · Handoff</div>
+      </div>
+      <div class="meta-item">
+        <span>Working with</span>
+        <div>Product · User Research · iOS &amp; Android engineers · Risk</div>
+      </div>
+      <div class="meta-item">
+        <span>Timeline</span>
+        <div>2 sprints · 2025</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAPTER 01 — THE PROBLEM
+     ═══════════════════════════════════════════════════════════ -->
+<section id="problem">
+  <div class="content-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">The problem.</span> <span class="intro-tagline">How might we show performance instead of telling it?</span></h2>
+
+
+    <div class="image-pair" data-step style="margin-top: var(--space-lg);">
+      <div>
+        <img src="assets/images/before-desktop.png"
+             alt="The existing desktop experience: investment performance chart before redesign"
+             onerror="this.outerHTML='<div class=&quot;media-placeholder&quot; data-aspect=&quot;4/3&quot;><svg class=&quot;media-placeholder-icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.5&quot;><rect x=&quot;2&quot; y=&quot;4&quot; width=&quot;20&quot; height=&quot;13&quot; rx=&quot;2&quot;/><path d=&quot;M8 21h8M12 17v4&quot;/></svg><div class=&quot;media-placeholder-label&quot;>Existing desktop experience</div><div class=&quot;media-placeholder-hint&quot;>Drop file at: assets/images/before-desktop.png</div></div>';">
+      </div>
+      <div>
+        <img src="assets/images/before-app.png"
+             alt="The old app: investment performance before redesign"
+             onerror="this.outerHTML='<div class=&quot;media-placeholder&quot; data-aspect=&quot;4/3&quot;><svg class=&quot;media-placeholder-icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.5&quot;><rect x=&quot;7&quot; y=&quot;2&quot; width=&quot;10&quot; height=&quot;20&quot; rx=&quot;2&quot;/><path d=&quot;M11 18h2&quot;/></svg><div class=&quot;media-placeholder-label&quot;>Old app experience</div><div class=&quot;media-placeholder-hint&quot;>Drop file at: assets/images/before-app.png</div></div>';">
+      </div>
+    </div>
+    <p class="media-block-caption" data-step>The before state: existing desktop experience (left) and the old app (right).</p>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ATTENTION GRABBER
+     ═══════════════════════════════════════════════════════════ -->
+<section id="hook">
+  <div class="wide-wrap">
+    <div data-reveal>
+      <div class="result-hero" style="max-width: 880px;">
+        <video src="assets/video/vip-demo.mp4" autoplay loop muted playsinline></video>
+      </div>
+    </div>
+    <p class="intro-body" data-step style="margin-top: var(--space-lg);">This moved 30-day retention by <strong style="color: var(--accent);">+50%</strong>. The next twenty minutes explain how.</p>
+
+    <div data-step style="margin-top: var(--space-md);">
+      <p class="chain-label">The impact chain</p>
+      <div class="chain">
+        <span class="chain-node first">Chart on Explore your pension</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">Clarity</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">CSAT</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">DAU / MAU</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node proven">Retention</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">Consolidations</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">Customer lifetime value</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">Revenue</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">Profit</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAPTER 02 — CONSTRAINTS
+     ═══════════════════════════════════════════════════════════ -->
+<section id="constraints">
+  <div class="wide-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">Constraints.</span> <span class="intro-tagline">Design thrives on restrictions.</span></h2>
+    <p class="intro-body" data-reveal>You need restrictions: deadlines, budgets, regulation. And somehow or other you come out the other side with sharper work. These were mine:</p>
+
+    <div class="constraints" data-step>
+      <div class="constraint">
+        <div class="constraint-label">Platform support</div>
+        <div class="constraint-text">iOS 15, 16, 17, 18, 26 · Android 16, 17</div>
+      </div>
+      <div class="constraint">
+        <div class="constraint-label">Scope</div>
+        <div class="constraint-text">2 sprints</div>
+      </div>
+      <div class="constraint">
+        <div class="constraint-label">Regulatory</div>
+        <div class="constraint-text">FCA-compliant copy and disclaimers</div>
+      </div>
+      <div class="constraint">
+        <div class="constraint-label">Data</div>
+        <div class="constraint-text">Multi-timeframe, volatile real-world data</div>
+      </div>
+      <div class="constraint">
+        <div class="constraint-label">Accessibility</div>
+        <div class="constraint-text">WCAG 2.1 AA, reduced motion, screen-reader equivalent</div>
+      </div>
+      <div class="constraint">
+        <div class="constraint-label">Resilience</div>
+        <div class="constraint-text">Handle wild swings gracefully</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     EMPATHISE
+     ═══════════════════════════════════════════════════════════ -->
+<section id="empathise">
+  <div class="wide-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">Empathise.</span></h2>
+    <div class="twocol">
+      <div>
+        <h3 class="feature-headline" data-step>Research insights.</h3>
+        <div class="constraints" data-step style="grid-template-columns: 1fr; gap: 12px; margin-top: var(--space-sm);">
+          <div class="constraint">
+            <div class="constraint-label">01</div>
+            <div class="constraint-text">Conducted 2 rounds of user interviews</div>
+          </div>
+          <div class="constraint">
+            <div class="constraint-label">02</div>
+            <div class="constraint-text">Shared insights with team</div>
+          </div>
+          <div class="constraint">
+            <div class="constraint-label">03</div>
+            <div class="constraint-text">Introduced design principles</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3 class="feature-headline" data-step>Design principles.</h3>
+        <div class="opps" data-step>
+          <div class="opp">
+            <span class="opp-num">01</span>
+            <span class="opp-text">Understand the moment. <em>Acknowledge their life moments. Make them feel understood, not judged.</em></span>
+          </div>
+          <div class="opp">
+            <span class="opp-num">02</span>
+            <span class="opp-text">Build confidence. <em>Offer clear, reliable information that makes decisions feel easier, not heavier.</em></span>
+          </div>
+          <div class="opp">
+            <span class="opp-num">03</span>
+            <span class="opp-text">Be transparent. <em>Avoid hidden meaning, jargon, or anything that could feel uncertain.</em></span>
+          </div>
+          <div class="opp">
+            <span class="opp-num">04</span>
+            <span class="opp-text">Keep it simple. <em>Ease of use is everything. Reduce the time between comprehension and action.</em></span>
+          </div>
+          <div class="opp">
+            <span class="opp-num">05</span>
+            <span class="opp-text">Respect their time. <em>Offer short, actionable guidance that fits into a busy life.</em></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAPTER 03 — EXPLORATION
+     ═══════════════════════════════════════════════════════════ -->
+<section id="exploration">
+  <div class="content-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">Exploration.</span> <span class="intro-tagline">Three directions, one decision.</span></h2>
+    <p class="body" data-reveal>I explored three directions before committing. Each answered the brief differently.</p>
+
+    <div class="explorations" data-step>
+      <div class="exploration">
+        <div class="exploration-tags">
+          <div class="exploration-tag tested">Tested</div>
+        </div>
+        <div class="exploration-letter">A</div>
+        <div class="exploration-thumb">
+          <img src="assets/images/exploration-a.png"
+               alt="Direction A: annotated line chart concept"
+               style="width:100%;height:100%;object-fit:cover;"
+               onerror="this.outerHTML='<span class=&quot;gcard-media-label&quot;>Drop file at: assets/images/exploration-a.png</span>';">
+        </div>
+        <div class="exploration-title">Annotated line</div>
+        <div class="exploration-body">The safe play. Traditional line chart with markers for key events. Answers <em>what happened</em>, not <em>what it means</em>.</div>
+      </div>
+      <div class="exploration">
+        <div class="exploration-letter">B</div>
+        <div class="exploration-thumb">
+          <img src="assets/images/exploration-b.png"
+               alt="Direction B: comparison-first concept with benchmark line"
+               style="width:100%;height:100%;object-fit:cover;"
+               onerror="this.outerHTML='<span class=&quot;gcard-media-label&quot;>Drop file at: assets/images/exploration-b.png</span>';">
+        </div>
+        <div class="exploration-title">Comparison-first</div>
+        <div class="exploration-body">Always show you vs. a benchmark. Stronger story, but forces a comparison the user might not want, and benchmarks are messy in pensions.</div>
+      </div>
+      <div class="exploration chosen">
+        <div class="exploration-tags">
+          <span class="exploration-tag tested">Tested</span>
+          <span class="exploration-tag">Chosen</span>
+        </div>
+        <div class="exploration-letter">C</div>
+        <div class="exploration-thumb">
+          <img src="assets/images/exploration-c.png"
+               alt="Direction C, the chosen concept: clean line with segmented timeframes and scrubbing"
+               style="width:100%;height:100%;object-fit:cover;"
+               onerror="this.outerHTML='<span class=&quot;gcard-media-label&quot;>Drop file at: assets/images/exploration-c.png</span>';">
+        </div>
+        <div class="exploration-title">Direct-manipulation</div>
+        <div class="exploration-body">A single clean line with segmented timeframe controls, plus scrubbing to reveal value at any point. Standard controls for the big picture, direct manipulation for the detail.</div>
+      </div>
+    </div>
+
+    <p class="body" style="margin-top: 2rem;" data-step>I chose C because it answered the primary question and the secondary ones, without cluttering the default view. The tradeoff was discoverability: interaction-led patterns are harder to learn. <strong>I'll come back to how I solved that.</strong></p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     RESEARCH INSIGHTS
+     ═══════════════════════════════════════════════════════════ -->
+<section id="research">
+  <div class="wide-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">User testing improvements.</span></h2>
+    <p class="intro-body" data-reveal>June 2025, with our user researcher. What triggers a check? Do people understand what they see? Where does comprehension break?</p>
+
+    <div class="twocol" style="grid-template-columns: 1fr 1fr;">
+      <div>
+        <div class="constraints" data-step style="grid-template-columns: 1fr; gap: 12px; margin-top: 0;">
+          <div class="constraint">
+            <div class="constraint-label">Insight 01 · Low financial literacy</div>
+            <div class="constraint-text">"The graph says it's going up, but the return is negative… I have no idea what it might mean."</div>
+          </div>
+          <div class="constraint">
+            <div class="constraint-label">Insight 02 · Misleading windows</div>
+            <div class="constraint-text">A negative 'return this year' made users think the pension wasn't doing well overall.</div>
+          </div>
+          <div class="constraint">
+            <div class="constraint-label">Insight 03 · High financial literacy</div>
+            <div class="constraint-text">"I can clearly see we're missing percentage values."</div>
+          </div>
+          <div class="constraint">
+            <div class="constraint-label">Insight 04 · Triggers</div>
+            <div class="constraint-text">"There was a big plummet in the stock market recently, checking to see if it's recovered."</div>
+          </div>
+        </div>
+        <p class="body" data-step style="margin-top: var(--space-sm);">Three main findings shaped the final solution: <strong>Events drive visits. Short windows mislead. Numbers need context.</strong></p>
+      </div>
+      <div>
+        <div class="feature-visual" data-step>
+          <img src="assets/images/research-insights.png"
+               alt="Usability research session: participant testing the investment performance screen"
+               style="max-height: 62vh;"
+               onerror="this.outerHTML='<div class=&quot;media-placeholder&quot; data-aspect=&quot;4/3&quot;><svg class=&quot;media-placeholder-icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.5&quot;><circle cx=&quot;12&quot; cy=&quot;8&quot; r=&quot;4&quot;/><path d=&quot;M4 21c0-4 3.6-6 8-6s8 2 8 6&quot;/></svg><div class=&quot;media-placeholder-label&quot;>Research visual</div><div class=&quot;media-placeholder-hint&quot;>Drop file at: assets/images/research-insights.png</div></div>';">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     THE SCENARIO
+     ═══════════════════════════════════════════════════════════ -->
+<section id="scenario">
+  <div class="content-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">The scenario.</span> <span class="intro-tagline">Are my savings in good hands?</span></h2>
+    <p class="intro-body" data-step>A job switcher, a few months in, opens the app to explore their pension. One question underneath it all: is my money being looked after, and is it growing?</p>
+    <p class="body" data-step>Ninety seconds. One thumb. The chart's job is <strong>reassurance over reaction</strong>: they should leave understanding that, over time, their savings are earning.</p>
+    <p class="caption" data-step style="text-align: left; margin-top: var(--space-sm);">Research showed events like market dips trigger visits. We deliberately designed against panic: longer timeframes show the long arc, and the disclaimer keeps short-term noise in context.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAPTER 04 — THE INTERACTIVE CHART
+     ═══════════════════════════════════════════════════════════ -->
+<section id="result">
+  <div class="wide-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">The result.</span> <span class="intro-tagline">Designed as an instrument, not a picture.</span></h2>
+
+    <div class="problem-statement" data-reveal>
+      <p class="ps-label">The opportunity</p>
+      <p class="ps-text">What if the app created a conversation, something to explore, something to come back for, and not just told users their pension value in text: a number, a date, a disclaimer.</p>
+    </div>
+
+    <div class="result-grid" data-reveal>
+      <div>
+        <div class="result-hero">
+          <video src="assets/video/vip-demo.mp4" autoplay loop muted playsinline controls></video>
+        </div>
+        <div class="media-block-caption">The shipped component · full demo</div>
+      </div>
+      <div>
+        <a href="https://www.figma.com/proto/REPLACE-WITH-PROTOTYPE-URL"
+           target="_blank" rel="noopener"
+           class="embed-link figma-chip">
+          Open in Figma
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M3 1h6v6M9 1L1 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <div class="image-pair" style="margin-top: 14px;">
+          <div>
+            <img src="assets/images/chart-detail-1.png"
+                 alt="Chart detail: scrubbing interaction"
+                 onerror="this.outerHTML='<div class=&quot;media-placeholder&quot; data-aspect=&quot;4/3&quot;><div class=&quot;media-placeholder-label&quot;>Detail 1</div><div class=&quot;media-placeholder-hint&quot;>assets/images/chart-detail-1.png</div></div>';">
+          </div>
+          <div>
+            <img src="assets/images/chart-detail-2.png"
+                 alt="Chart detail: comparison anchor"
+                 onerror="this.outerHTML='<div class=&quot;media-placeholder&quot; data-aspect=&quot;4/3&quot;><div class=&quot;media-placeholder-label&quot;>Detail 2</div><div class=&quot;media-placeholder-hint&quot;>assets/images/chart-detail-2.png</div></div>';">
+          </div>
+        </div>
+        <div class="media-block-caption">Scrubbing (left) · comparison anchor (right)</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAPTER 05 — INTERACTION MODEL
+     ═══════════════════════════════════════════════════════════ -->
+<section id="interaction">
+  <div class="wide-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">Interaction.</span> <span class="intro-tagline">Two controls, two levels of detail.</span></h2>
+
+    <div class="twocol">
+      <div>
+        <div class="gestures" data-step>
+          <div class="gesture">
+            <div class="gesture-name">Segmented&nbsp;control</div>
+            <div class="gesture-diagram">
+              <img src="assets/images/interaction-segmented.png"
+                   alt="The segmented timeframe control in the shipped component: 6M, 1Y, 3Y, All time"
+                   onerror="this.outerHTML='<span class=&quot;gcard-media-label&quot;>Drop: assets/images/interaction-segmented.png</span>';">
+            </div>
+            <div class="gesture-desc">Four timeframes, one tap: 6M, 1Y, 3Y, All time. The standard pattern; no learning curve.</div>
+          </div>
+          <div class="gesture">
+            <div class="gesture-name">Scrubbing</div>
+            <div class="gesture-diagram">
+              <img src="assets/images/interaction-scrub.png"
+                   alt="Scrubbing the chart: vertical guide line with date and value tooltip"
+                   onerror="this.outerHTML='<span class=&quot;gcard-media-label&quot;>Drop: assets/images/interaction-scrub.png</span>';">
+            </div>
+            <div class="gesture-desc">Drag to reveal value at any point in time: direct manipulation for the question segments can't answer.</div>
+          </div>
+        </div>
+        <p class="body" data-step style="margin-top: var(--space-sm);">Rich interaction from minimal input. The discipline was knowing where <em>not</em> to invent: <strong>two patterns, two clear jobs.</strong></p>
+      </div>
+      <div>
+        <h3 class="feature-headline" data-step>Choosing the timeframes was the harder design.</h3>
+        <p class="body" data-step style="margin-top: 8px;">A learning vehicle: the right timeframes depend on who is looking.</p>
+        <table class="seg-table" data-step>
+          <thead>
+            <tr><th>Segment</th><th>Suggested timeframes</th><th>Why it works</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>New joiners</td>
+              <td>1M · 3M · 1Y</td>
+              <td>Early wins, builds trust, habit formation.</td>
+            </tr>
+            <tr>
+              <td>Active savers</td>
+              <td>1Y · 3Y · 5Y</td>
+              <td>Reinforces progress, scenario planning, upsell nudges.</td>
+            </tr>
+            <tr>
+              <td>Deferred users</td>
+              <td>Since last contribution · 5Y · to retirement</td>
+              <td>Re-engages "dormant but growing", supports consolidation.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="body" data-step style="margin-top: var(--space-sm);">Longer horizons: <strong>later engagement, greater retention.</strong> Which set to ship became the hardest decision. I'll come back to it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAPTER 06 — STATES
+     ═══════════════════════════════════════════════════════════ -->
+<section id="states">
+  <div class="wide-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">States.</span> <span class="intro-tagline">The default state is the smallest part of the work.</span></h2>
+    <p class="intro-body" data-reveal>The hero shot earlier is one state out of many. Most of the design work happens in the states you rarely see.</p>
+
+    <div class="card-gallery-wrap" data-reveal>
+      <div class="card-gallery">
+
+        <div class="gcard">
+          <div class="gcard-content">
+            <p class="gcard-eyebrow">State · Empty</p>
+            <h3 class="gcard-title">Your journey starts here.</h3>
+            <p class="gcard-body">The starting state in the wild: no values from the wrapper start date, then money arriving in bulk. Reframe the absence as a beginning, with the deposit point as the anchor.</p>
+          </div>
+          <div class="gcard-media"><img src="assets/images/problem-before.png" alt="Portfolio chart with a large gap of missing data from the wrapper start date, then money arriving in bulk" style="object-fit: contain; background: #F5F5F5; padding: 8px;"></div>
+          <div class="gcard-meta">Available on: iOS · Android</div>
+        </div>
+
+        <div class="gcard">
+          <div class="gcard-content">
+            <p class="gcard-eyebrow">State · Negative</p>
+            <h3 class="gcard-title">Loss without panic.</h3>
+            <p class="gcard-body">Muted red, not vermilion. The minus sign and number weight carry the meaning. Colour is reinforcement, not signal.</p>
+          </div>
+          <div class="gcard-media"><span class="gcard-media-label">Replace: assets/images/state-negative.png</span></div>
+          <div class="gcard-meta">Available on: iOS · Android</div>
+        </div>
+
+        <div class="gcard">
+          <div class="gcard-content">
+            <p class="gcard-eyebrow">State · Error</p>
+            <h3 class="gcard-title">Preserve the frame.</h3>
+            <p class="gcard-body">Retain the chart layout, retry inline. No page reflow, no full-screen error. The user keeps their place.</p>
+          </div>
+          <div class="gcard-media"><span class="gcard-media-label">Replace: assets/images/state-error.png</span></div>
+          <div class="gcard-meta">Available on: iOS · Android</div>
+        </div>
+
+        <div class="gcard">
+          <div class="gcard-content">
+            <p class="gcard-eyebrow">State · Accessibility</p>
+            <h3 class="gcard-title">Summarise bands, not points.</h3>
+            <p class="gcard-body">TalkBack doesn't read every data point. It summarises the chart in bands: start, end, peak and low, each with value and date. High contrast uses pattern fills under the line.</p>
+          </div>
+          <div class="gcard-media"><span class="gcard-media-label">Replace: assets/images/state-a11y.png</span></div>
+          <div class="gcard-meta">Available on: iOS · Android</div>
+        </div>
+
+      </div>
+      <div class="gallery-paddles">
+        <button class="paddle" data-dir="prev" aria-label="Previous"><svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="paddle" data-dir="next" aria-label="Next"><svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAPTER 07 — DETAILS
+     ═══════════════════════════════════════════════════════════ -->
+<section id="details">
+  <div class="wide-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">Details.</span> <span class="intro-tagline">Every little detail makes it all delightful.</span></h2>
+    <p class="intro-body" data-reveal>Motion as function, not decoration: the refinements that make it feel engineered, reliable, and satisfying.</p>
+
+    <div class="card-gallery-wrap" data-reveal>
+      <div class="card-gallery">
+
+        <div class="gcard">
+          <div class="gcard-content">
+            <p class="gcard-eyebrow">Friendly curve interpolation</p>
+            <h3 class="gcard-title">A smooth curve that doesn't lie.</h3>
+            <p class="gcard-body">Standard cubic splines overshoot at peaks and invent phantom values. Monotone cubic keeps the curve smooth without inventing data.</p>
+            <p class="gcard-spec">Monotone cubic</p>
+          </div>
+          <div class="gcard-media"><span class="gcard-media-label">Replace: assets/images/detail-curve.png</span></div>
+          <div class="gcard-meta">Available on: iOS · Android</div>
+        </div>
+
+        <div class="gcard">
+          <div class="gcard-content">
+            <p class="gcard-eyebrow">Performance</p>
+            <h3 class="gcard-title">Designed to a render budget.</h3>
+            <p class="gcard-body">Low-end hardware is a design constraint, not an engineering problem. Tested on a four-year-old Samsung A52: under 100ms to paint, 60fps during scrub with 900 points loaded.</p>
+            <p class="gcard-spec">&lt; 100ms</p>
+            <p class="gcard-spec-detail">60fps on mid-tier Android</p>
+          </div>
+          <div class="gcard-media"><span class="gcard-media-label">Replace: assets/images/detail-performance.png</span></div>
+          <div class="gcard-meta">Available on: Android · iOS</div>
+        </div>
+
+        <div class="gcard">
+          <div class="gcard-content">
+            <p class="gcard-eyebrow">Haptics</p>
+            <h3 class="gcard-title">Communicating key moments.</h3>
+            <p class="gcard-body">A selection haptic fires as the scrub indicator crosses each data point. Subtle enough to feel like the chart, not a button.</p>
+            <p class="gcard-spec">.selection</p>
+            <p class="gcard-spec-detail">Triggered at data crossings</p>
+          </div>
+          <div class="gcard-media"><span class="gcard-media-label">Replace: assets/images/detail-haptics.png</span></div>
+          <div class="gcard-meta">Available on: iOS · Android</div>
+        </div>
+
+        <div class="gcard">
+          <div class="gcard-content">
+            <p class="gcard-eyebrow">Line animation</p>
+            <h3 class="gcard-title">The line draws itself.</h3>
+            <p class="gcard-body">On screen load, and again on every segment change, the line animates into view left to right, teaching the temporal direction of the data before the user has to think about it.</p>
+            <p class="gcard-spec">1s</p>
+            <p class="gcard-spec-detail">EaseInOutCubic · Android implementation; iOS tuned separately</p>
+          </div>
+          <div class="gcard-media"><video src="assets/video/ios-line-animation.mp4" autoplay loop muted playsinline></video></div>
+          <div class="gcard-meta">Available on: Android · iOS</div>
+        </div>
+
+      </div>
+      <div class="gallery-paddles">
+        <button class="paddle" data-dir="prev" aria-label="Previous"><svg viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button class="paddle" data-dir="next" aria-label="Next"><svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAPTER 08 — HANDOFF & ACCESSIBILITY
+     ═══════════════════════════════════════════════════════════ -->
+<section id="handoff">
+  <div class="wide-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">Handoff.</span> <span class="intro-tagline">A design isn't done until an engineer can build it without asking.</span></h2>
+    <p class="intro-body" data-reveal>The accessibility spec was externally audited by User Vision, whose guidance centred on three areas: <strong>the non-sighted experience, tap target standards, and axis guidance</strong>.</p>
+
+    <div class="handoff" data-reveal>
+      <div class="handoff-artefact">
+        <!-- TODO: Replace with screenshot of real Figma annotation / spec doc -->
+        <div class="media-placeholder" data-aspect="4/3">
+          <svg class="media-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="9" x2="9" y2="21"/>
+          </svg>
+          <div class="media-placeholder-label">Figma spec table · Investment chart v1.2</div>
+          <div class="media-placeholder-hint">Replace with: assets/images/handoff-spec.png</div>
+        </div>
+        <p class="caption">A real extract from the handoff documentation</p>
+      </div>
+
+      <div class="handoff-callouts">
+        <div class="callout" data-step>
+          <div class="callout-num">1</div>
+          <div>
+            <div class="callout-title">Hit area extends 24px</div>
+            <div class="callout-body">The visual line is 2px. The interactive hit area is 24px tall. Without the extension, the chart looks tappable but isn't, especially on smaller phones. Verified against User Vision's tap-target guidance.</div>
+          </div>
+        </div>
+        <div class="callout" data-step>
+          <div class="callout-num">2</div>
+          <div>
+            <div class="callout-title">Number is the primary loss signal</div>
+            <div class="callout-body">A colour-blind user perceives the muted red as grey. That's fine: the minus sign and bold weight carry the meaning. Colour is reinforcement, not signal.</div>
+          </div>
+        </div>
+        <div class="callout" data-step>
+          <div class="callout-num">3</div>
+          <div>
+            <div class="callout-title">TalkBack summarises bands, not points</div>
+            <div class="callout-body">The first spec read out start, end, peak and low values with their dates. We evolved it to summarise <strong>bands of movement</strong>: faster to listen to, and closer to how a sighted user actually scans the line. Equivalence, not translation.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAPTER 09 — HARDEST DECISION
+     ═══════════════════════════════════════════════════════════ -->
+<section id="decision">
+  <div class="content-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">The hardest decision.</span> <span class="intro-tagline">The one I almost got wrong.</span></h2>
+    <p class="intro-body" data-reveal>Selecting the timeframes.</p>
+    <p class="body" data-step>The instinct was to design for everyone. <strong>That usually means designing for no one.</strong></p>
+    <p class="body" data-step><strong>Option A, the new-joiner set.</strong> 1M · 3M · 1Y. Early wins, fast engagement. The PRD's original v1 spec.</p>
+    <p class="body" data-step><strong>Option B, longer horizons.</strong> 6M · 1Y · 3Y · All time. Truer to what a pension is.</p>
+
+    <!-- TODO: Replace with timeframe options comparison export -->
+    <div class="media-placeholder" data-aspect="16/9" data-step>
+      <svg class="media-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="8" height="18" rx="1"/>
+        <rect x="13" y="3" width="8" height="18" rx="1"/>
+      </svg>
+      <div class="media-placeholder-label">The two timeframe options, side by side</div>
+      <div class="media-placeholder-hint">Replace with: assets/images/timeframes-decision.png</div>
+    </div>
+
+    <p class="body" data-step>Research settled it: a negative short-window return made users think the pension wasn't doing well, <strong>even when the line went up.</strong></p>
+    <p class="body" data-step>We shipped the longer horizons: <strong>later engagement, greater retention.</strong></p>
+    <p class="body" data-step>The comfortable move was a compromise set. <strong>The discipline was choosing.</strong> The next slide is the verdict.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAPTER 10 — OUTCOME + PULL QUOTE
+     ═══════════════════════════════════════════════════════════ -->
+<section id="outcome">
+  <div class="wide-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">Outcome.</span> <span class="intro-tagline">Built, validated, called a masterpiece by the engineer who built it.</span></h2>
+
+    <div class="twocol">
+      <div>
+        <div class="feature-visual" data-step>
+          <img src="assets/images/masterpiece-quote.png" alt="Teams message from the Android engineer: to be fair the whole component is a masterpiece, from UI to animation and a11y, I love it">
+        </div>
+        <p class="media-block-caption" data-step>The Android engineer who built it, unprompted.</p>
+        <p class="body" data-step style="margin-top: var(--space-sm);">The only way an engineer says that is if there was nothing left to guess.</p>
+        <div class="outcomes" data-step>
+          <div class="outcome">
+            <div class="outcome-value">+44%</div>
+            <div class="outcome-label">7-day retention · 27% → 39%</div>
+          </div>
+          <div class="outcome">
+            <div class="outcome-value">+50%</div>
+            <div class="outcome-label">30-day retention · 27% → 41%</div>
+          </div>
+          <div class="outcome">
+            <div class="outcome-value">+43%</div>
+            <div class="outcome-label">90-day retention · 27% → 38.5%</div>
+          </div>
+        </div>
+        <p class="caption" data-step style="text-align:left; margin-top: 10px;">Returning active users within each window · N = 12.4k users</p>
+      </div>
+      <div>
+        <div class="feature-visual" data-step>
+          <img src="assets/images/retention-results.png" alt="Internal results announcement: Visual Investment Performance increases retention by 50 percent across 7, 30 and 90 day windows" style="max-height: 58vh;">
+        </div>
+        <p class="media-block-caption" data-step>The internal results announcement.</p>
+      </div>
+    </div>
+
+    <div data-step style="margin-top: var(--space-md);">
+      <p class="chain-label">The impact chain</p>
+      <div class="chain">
+        <span class="chain-node first">Chart on Explore your pension</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">Clarity</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">CSAT</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">DAU / MAU</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node proven">Retention</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">Consolidations</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">Customer lifetime value</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">Revenue</span>
+        <span class="chain-arrow">→</span>
+        <span class="chain-node">Profit</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CHAPTER 11 — REFLECTION
+     ═══════════════════════════════════════════════════════════ -->
+<section id="reflection">
+  <div class="content-wrap">
+    <h2 class="intro-title" data-reveal><span class="intro-name">Reflection.</span> <span class="intro-tagline">What I'd do differently.</span></h2>
+    <p class="intro-body" data-reveal>I'd put the timeframe debate in front of real users earlier. We settled it with judgement and shipped data; a week of testing would have settled it with evidence.</p>
+    <p class="body" data-step>The transferable principle: <strong>designing trust into data-dense moments matters anywhere users make decisions under uncertainty</strong>, whether that's choosing a fund or choosing what to watch next.</p>
+
+    <h3 class="feature-headline" style="margin-top: var(--space-xl);" data-step>What's next.</h3>
+    <p class="body" style="margin-top: var(--space-sm);" data-step>Three things earned a place on the roadmap: a <strong>benchmark overlay</strong> (the comparison direction B wanted, done as an opt-in rather than a default), <strong>projection to retirement</strong> for deferred savers, and <strong>segment-adaptive timeframes</strong> once the audience matures beyond the launch cohort.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════ -->
+<footer class="footer" id="thanks">
+  <div class="content-wrap">
+    <h2 class="footer-cta" data-reveal>Thanks for <em>reading</em>.</h2>
+    <div class="footer-links" data-reveal>
+      <a href="../index.html">Back to portfolio</a>
+      <a href="mailto:hello@ollieedge.com">hello@ollieedge.com</a>
+      <a href="https://www.linkedin.com/in/ollieedge/" target="_blank" rel="noopener">LinkedIn</a>
+      <a href="https://calendly.com/ollieedge/15min" target="_blank" rel="noopener">Schedule a call</a>
+    </div>
+    <div class="footer-meta">Ollie Edge · UX Designer · London · 2026</div>
+  </div>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   PROGRESS BAR + STICKY HEADER STATE
+   ═══════════════════════════════════════════════════════════════ */
+const progress = document.getElementById('progress');
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME TOGGLE — matches portfolio's light/dark pattern
+   ═══════════════════════════════════════════════════════════════ */
+/* Theme: dark by default. Press 'D' to toggle light/dark. */
+const themeColor = document.getElementById('themeColorMeta');
+const stored = localStorage.getItem('cs-theme');
+if (stored === 'dark') {
+  document.documentElement.classList.add('dark');
+  themeColor.setAttribute('content', '#141414');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'd' || e.key === 'D') {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    document.documentElement.classList.toggle('dark');
+    const isDark = document.documentElement.classList.contains('dark');
+    localStorage.setItem('cs-theme', isDark ? 'dark' : 'light');
+    themeColor.setAttribute('content', isDark ? '#141414' : '#F0EBE3');
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL ON SCROLL
+   ═══════════════════════════════════════════════════════════════ */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+
+/* ═══════════════════════════════════════════════════════════════
+   GALLERY PADDLES
+   ═══════════════════════════════════════════════════════════════ */
+document.querySelectorAll('.card-gallery-wrap').forEach(wrap => {
+  const gal = wrap.querySelector('.card-gallery');
+  wrap.querySelectorAll('.paddle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = gal.querySelector('.gcard');
+      const step = card ? card.offsetWidth + 20 : 440;
+      gal.scrollBy({ left: btn.dataset.dir === 'next' ? step : -step, behavior: 'smooth' });
+    });
+  });
+});
+
+
+/* ═══════════════════════════════════════════════════════════════
+   DECK NAVIGATION
+   ═══════════════════════════════════════════════════════════════ */
+const slides = Array.from(document.querySelectorAll('section, footer.footer'));
+const deckCounter = document.getElementById('deckCounter');
+let slideIdx = 0;
+
+function fitSlide(s) {
+  if (!s) return;
+  const inner = s.querySelector(':scope > .content-wrap, :scope > .wide-wrap');
+  if (!inner) return;
+  inner.style.transform = 'none';
+  const availH = s.clientHeight - 40;
+  const availW = s.clientWidth;
+  const h = inner.offsetHeight;
+  const w = inner.offsetWidth;
+  if (!h || !w) return;
+  const scale = Math.min(1, availH / h, availW / w);
+  inner.style.transformOrigin = 'center center';
+  inner.style.transform = scale < 1 ? 'scale(' + scale + ')' : 'none';
+}
+
+function goTo(i, updateHash = true, revealAll = false) {
+  i = Math.max(0, Math.min(slides.length - 1, i));
+  slides.forEach((s, n) => s.classList.toggle('active', n === i));
+  slideIdx = i;
+  const active = slides[i];
+  resetSteps(active, true);
+  requestAnimationFrame(() => fitSlide(active));
+  setTimeout(() => fitSlide(active), 150);
+  active.scrollTop = 0;
+  deckCounter.textContent = (i + 1) + ' / ' + slides.length;
+  progress.style.transform = 'scaleX(' + (slides.length > 1 ? i / (slides.length - 1) : 1) + ')';
+  if (updateHash && active.id) history.replaceState(null, '', '#' + active.id);
+}
+
+/* Bit-by-bit reveal: forward reveals next step before advancing slides */
+function slideSteps(s) { return Array.from(s.querySelectorAll('[data-step]')); }
+
+function resetSteps(s, revealAll) {
+  slideSteps(s).forEach(el => el.classList.toggle('step-on', !!revealAll));
+}
+
+function nextAction() { goTo(slideIdx + 1); }
+function prevAction() { goTo(slideIdx - 1); }
+
+document.getElementById('prevSlide').addEventListener('click', prevAction);
+document.getElementById('nextSlide').addEventListener('click', nextAction);
+
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); nextAction(); }
+  if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prevAction(); }
+  if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+  if (e.key === 'End') { e.preventDefault(); goTo(slides.length - 1, true, true); }
+});
+
+/* Anchor links (local nav, in-page) switch slides instead of scrolling */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href').slice(1);
+    const t = slides.findIndex(s => s.id === id);
+    if (t > -1) { e.preventDefault(); goTo(t, true, true); }
+  });
+});
+
+/* Keep the active slide fitted */
+window.addEventListener('resize', () => fitSlide(slides[slideIdx]));
+document.addEventListener('load', e => {
+  if (e.target.tagName === 'IMG') fitSlide(slides[slideIdx]);
+}, true);
+document.addEventListener('loadedmetadata', e => {
+  if (e.target.tagName === 'VIDEO') fitSlide(slides[slideIdx]);
+}, true);
+
+/* Init from URL hash */
+const initIdx = slides.findIndex(s => s.id === location.hash.slice(1));
+goTo(initIdx > -1 ? initIdx : 0, false, initIdx > 0);
+window.addEventListener('hashchange', () => {
+  const t = slides.findIndex(s => s.id === location.hash.slice(1));
+  if (t > -1 && t !== slideIdx) goTo(t, false, true);
+});
+</script>
+
+</body>
+</html>
